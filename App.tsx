@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, WishlistItem, SummaryStats, FirebaseConfig } from './types';
-import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY, SYNC_CONFIG_KEY } from './constants';
+import { User, WishlistItem, SummaryStats } from './types';
+import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY, FIREBASE_CONFIG } from './constants';
 import { Plane, RefreshCw, Trash2, Cloud } from 'lucide-react';
 import AddItemForm from './components/AddItemForm';
 import ItemCard from './components/ItemCard';
@@ -29,11 +30,6 @@ const App: React.FC = () => {
   });
 
   // --- Sync State ---
-  const [firebaseConfig, setFirebaseConfig] = useState<FirebaseConfig | null>(() => {
-    const saved = localStorage.getItem(SYNC_CONFIG_KEY);
-    return saved ? JSON.parse(saved) : null;
-  });
-  
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [dbInstance, setDbInstance] = useState<Database | null>(null);
   const [isSyncConnected, setIsSyncConnected] = useState(false);
@@ -54,8 +50,9 @@ const App: React.FC = () => {
 
   // --- Firebase Initialization & Listeners ---
   useEffect(() => {
-    if (!firebaseConfig) {
-      setDbInstance(null);
+    // 檢查使用者是否已經填寫了 constants.ts 中的設定
+    if (FIREBASE_CONFIG.apiKey === "YOUR_API_KEY_HERE" || !FIREBASE_CONFIG.databaseURL) {
+      setSyncError("尚未設定 API Key");
       setIsSyncConnected(false);
       return;
     }
@@ -64,7 +61,7 @@ const App: React.FC = () => {
       // Avoid re-initializing if already exists
       let app: FirebaseApp;
       if (!getApps().length) {
-        app = initializeApp(firebaseConfig);
+        app = initializeApp(FIREBASE_CONFIG);
       } else {
         app = getApp(); // Use existing default app
       }
@@ -104,7 +101,7 @@ const App: React.FC = () => {
       setSyncError(e.message);
       setIsSyncConnected(false);
     }
-  }, [firebaseConfig]);
+  }, []); // Run once on mount
 
 
   // --- Helper to Write to Cloud ---
@@ -164,20 +161,6 @@ const App: React.FC = () => {
     saveToCloud(items, newRate);
   };
 
-  // --- Sync Settings Handlers ---
-  const handleSaveSyncConfig = (config: FirebaseConfig) => {
-    setFirebaseConfig(config);
-    localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(config));
-  };
-
-  const handleDisconnectSync = () => {
-    setFirebaseConfig(null);
-    localStorage.removeItem(SYNC_CONFIG_KEY);
-    setDbInstance(null);
-    setIsSyncConnected(false);
-    setSyncError(null);
-  };
-
   // --- Stats Calculation ---
   const stats: SummaryStats = useMemo(() => {
     return items.reduce((acc, item) => {
@@ -228,18 +211,16 @@ const App: React.FC = () => {
             {/* Controls */}
             <div className="flex flex-wrap items-center gap-3">
               
-              {/* Sync Button */}
-              <button 
-                onClick={() => setIsSyncModalOpen(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
-                  isSyncConnected 
-                    ? 'bg-green-50 border-green-200 text-green-700' 
-                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
-                }`}
-              >
-                <Cloud size={16} className={isSyncConnected ? 'fill-green-500 text-green-500' : ''} />
-                <span className="hidden sm:inline">{isSyncConnected ? '已同步' : '雲端同步'}</span>
-              </button>
+              {/* Sync Button - Only show when connected */}
+              {isSyncConnected && (
+                <button 
+                  onClick={() => setIsSyncModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all bg-green-50 border-green-200 text-green-700"
+                >
+                  <Cloud size={16} className="fill-green-500 text-green-500" />
+                  <span className="hidden sm:inline">同步中</span>
+                </button>
+              )}
 
               {/* Exchange Rate Input */}
               <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 px-3 py-1.5 shadow-sm">
@@ -341,24 +322,19 @@ const App: React.FC = () => {
              {/* Info / Footer */}
              <div className="mt-6 text-center lg:text-left text-xs text-gray-400 px-2 space-y-1">
                 <p>⚠️ 匯率僅供參考，實際金額請以購買當下為準。</p>
-                <p>
-                   {isSyncConnected 
-                     ? '☁️ 資料已透過 Firebase 雲端同步。' 
-                     : '💾 資料目前僅儲存於本機瀏覽器。'}
-                </p>
+                {isSyncConnected && (
+                  <p>☁️ 資料已透過 Firebase 雲端同步。</p>
+                )}
              </div>
           </div>
 
         </div>
       </main>
 
-      {/* Sync Modal */}
+      {/* Sync Modal (ReadOnly Status) */}
       <SyncConfigModal 
         isOpen={isSyncModalOpen}
         onClose={() => setIsSyncModalOpen(false)}
-        config={firebaseConfig}
-        onSave={handleSaveSyncConfig}
-        onDisconnect={handleDisconnectSync}
         isConnected={isSyncConnected}
         connectionError={syncError}
       />

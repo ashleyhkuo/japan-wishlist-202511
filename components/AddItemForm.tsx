@@ -42,6 +42,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
   const buttonClass = currentUser === 'Ash' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-blue-500 hover:bg-blue-600';
   const ringClass = currentUser === 'Ash' ? 'focus:ring-rose-500' : 'focus:ring-blue-500';
 
+  // Shared input style: Light gray background, dark text, white on focus
+  const inputStyle = `w-full px-4 py-2 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:bg-white focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all placeholder-gray-400`;
+
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-${themeColor}-100 p-6 mb-8`}>
       <h2 className={`text-lg font-bold text-gray-800 mb-4 flex items-center gap-2`}>
@@ -62,7 +65,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Wakamoto, Uniqlo T-shirt..."
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all`}
+              className={inputStyle}
             />
           </div>
           <div>
@@ -75,7 +78,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               required
               value={quantity}
               onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all text-center`}
+              className={`${inputStyle} text-center`}
             />
           </div>
         </div>
@@ -87,14 +90,14 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               單價 JPY (稅前)
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-400">¥</span>
+              <span className="absolute left-3 top-2.5 text-gray-500">¥</span>
               <input
                 type="number"
                 min="0"
                 value={priceJpy}
                 onChange={(e) => setPriceJpy(e.target.value)}
                 placeholder="0"
-                className={`w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all`}
+                className={`${inputStyle} pl-8`}
               />
             </div>
           </div>
@@ -124,7 +127,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
             onChange={(e) => setNotes(e.target.value)}
             placeholder="請詳細描述商品細節..."
             rows={4} 
-            className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all resize-y`}
+            className={`${inputStyle} resize-y`}
           />
         </div>
 
@@ -138,7 +141,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 focus:bg-white outline-none transition-colors text-gray-600"
+            className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 text-gray-700 focus:bg-white focus:border-gray-300 outline-none transition-colors"
           />
         </div>
 
