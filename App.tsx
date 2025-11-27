@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { User, WishlistItem, SummaryStats } from './types';
-import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY } from './constants';
-import { Plane, Users, RefreshCw, Trash2, Github } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { User, WishlistItem, SummaryStats, FirebaseConfig } from './types';
+import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY, SYNC_CONFIG_KEY } from './constants';
+import { Plane, RefreshCw, Trash2, Cloud } from 'lucide-react';
 import AddItemForm from './components/AddItemForm';
 import ItemCard from './components/ItemCard';
 import SummaryWidget from './components/SummaryWidget';
+import SyncConfigModal from './components/SyncConfigModal';
+
+// Firebase Imports
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getDatabase, ref, set, onValue, Database, off } from 'firebase/database';
 
 const App: React.FC = () => {
-  // State initialization
+  // --- Local State ---
   const [items, setItems] = useState<WishlistItem[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : [];
@@ -23,7 +28,18 @@ const App: React.FC = () => {
     return (saved as User) || 'Ash';
   });
 
-  // Persistence effects
+  // --- Sync State ---
+  const [firebaseConfig, setFirebaseConfig] = useState<FirebaseConfig | null>(() => {
+    const saved = localStorage.getItem(SYNC_CONFIG_KEY);
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [dbInstance, setDbInstance] = useState<Database | null>(null);
+  const [isSyncConnected, setIsSyncConnected] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  // --- Persistence Effects (Local) ---
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
@@ -36,7 +52,79 @@ const App: React.FC = () => {
     localStorage.setItem(USER_STORAGE_KEY, currentUser);
   }, [currentUser]);
 
-  // Handlers
+  // --- Firebase Initialization & Listeners ---
+  useEffect(() => {
+    if (!firebaseConfig) {
+      setDbInstance(null);
+      setIsSyncConnected(false);
+      return;
+    }
+
+    try {
+      // Avoid re-initializing if already exists
+      let app: FirebaseApp;
+      if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+      } else {
+        app = getApp(); // Use existing default app
+      }
+      
+      const db = getDatabase(app);
+      setDbInstance(db);
+      setSyncError(null);
+
+      // --- Setup Listeners ---
+      const listRef = ref(db, 'shopping-list/data');
+      
+      const unsubscribe = onValue(listRef, (snapshot) => {
+        setIsSyncConnected(true);
+        setSyncError(null);
+        const data = snapshot.val();
+        
+        if (data) {
+          // Merge logic: Remote overwrites local for simplicity in this use case
+          if (data.items) {
+             setItems(data.items);
+          }
+          if (data.exchangeRate) {
+             setExchangeRate(data.exchangeRate);
+          }
+        }
+      }, (error) => {
+        setIsSyncConnected(false);
+        setSyncError(error.message);
+        console.error("Firebase Read Error:", error);
+      });
+
+      return () => {
+        off(listRef); // Cleanup listener
+      };
+
+    } catch (e: any) {
+      setSyncError(e.message);
+      setIsSyncConnected(false);
+    }
+  }, [firebaseConfig]);
+
+
+  // --- Helper to Write to Cloud ---
+  const saveToCloud = useCallback((newItems: WishlistItem[], newRate: number) => {
+    if (dbInstance) {
+      const listRef = ref(dbInstance, 'shopping-list/data');
+      set(listRef, {
+        items: newItems,
+        exchangeRate: newRate,
+        updatedAt: Date.now(),
+        updatedBy: currentUser
+      }).catch(err => {
+        console.error("Firebase Write Error:", err);
+        setSyncError("寫入失敗，請檢查網路或權限");
+      });
+    }
+  }, [dbInstance, currentUser]);
+
+
+  // --- Action Handlers ---
   const handleAddItem = (newItem: Omit<WishlistItem, 'id' | 'createdAt' | 'isBought'>) => {
     const item: WishlistItem = {
       ...newItem,
@@ -44,26 +132,53 @@ const App: React.FC = () => {
       createdAt: Date.now(),
       isBought: false,
     };
-    setItems(prev => [item, ...prev]);
+    const updatedItems = [item, ...items];
+    setItems(updatedItems);
+    saveToCloud(updatedItems, exchangeRate);
   };
 
   const handleUpdateItem = (id: string, updates: Partial<WishlistItem>) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+    const updatedItems = items.map(item => item.id === id ? { ...item, ...updates } : item);
+    setItems(updatedItems);
+    saveToCloud(updatedItems, exchangeRate);
   };
 
   const handleDeleteItem = (id: string) => {
     if (window.confirm('確定要刪除這個項目嗎？')) {
-      setItems(prev => prev.filter(item => item.id !== id));
+      const updatedItems = items.filter(item => item.id !== id);
+      setItems(updatedItems);
+      saveToCloud(updatedItems, exchangeRate);
     }
   };
   
   const handleClearAll = () => {
     if (window.confirm('警告：這將會刪除所有清單內容！確定嗎？')) {
-      setItems([]);
+      const updatedItems: WishlistItem[] = [];
+      setItems(updatedItems);
+      saveToCloud(updatedItems, exchangeRate);
     }
   };
 
-  // Stats Calculation
+  const handleRateChange = (newRate: number) => {
+    setExchangeRate(newRate);
+    saveToCloud(items, newRate);
+  };
+
+  // --- Sync Settings Handlers ---
+  const handleSaveSyncConfig = (config: FirebaseConfig) => {
+    setFirebaseConfig(config);
+    localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(config));
+  };
+
+  const handleDisconnectSync = () => {
+    setFirebaseConfig(null);
+    localStorage.removeItem(SYNC_CONFIG_KEY);
+    setDbInstance(null);
+    setIsSyncConnected(false);
+    setSyncError(null);
+  };
+
+  // --- Stats Calculation ---
   const stats: SummaryStats = useMemo(() => {
     return items.reduce((acc, item) => {
       const taxMultiplier = item.addTax ? 1.1 : 1.0;
@@ -110,9 +225,22 @@ const App: React.FC = () => {
               </h1>
             </div>
 
-            {/* Controls: Rate & User */}
+            {/* Controls */}
             <div className="flex flex-wrap items-center gap-3">
               
+              {/* Sync Button */}
+              <button 
+                onClick={() => setIsSyncModalOpen(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                  isSyncConnected 
+                    ? 'bg-green-50 border-green-200 text-green-700' 
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                <Cloud size={16} className={isSyncConnected ? 'fill-green-500 text-green-500' : ''} />
+                <span className="hidden sm:inline">{isSyncConnected ? '已同步' : '雲端同步'}</span>
+              </button>
+
               {/* Exchange Rate Input */}
               <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 px-3 py-1.5 shadow-sm">
                 <span className="text-sm font-medium text-gray-500 mr-2 whitespace-nowrap">匯率 (1 JPY ≈)</span>
@@ -120,7 +248,7 @@ const App: React.FC = () => {
                   type="number"
                   step="0.001"
                   value={exchangeRate}
-                  onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleRateChange(parseFloat(e.target.value) || 0)}
                   className="w-16 bg-transparent font-bold text-gray-800 outline-none text-right"
                 />
                 <span className="text-sm font-medium text-gray-500 ml-1">TWD</span>
@@ -211,14 +339,29 @@ const App: React.FC = () => {
              <SummaryWidget stats={stats} />
              
              {/* Info / Footer */}
-             <div className="mt-6 text-center lg:text-left text-xs text-gray-400 px-2">
-                <p className="mb-2">⚠️ 匯率僅供參考，實際金額請以購買當下為準。</p>
-                <p>資料儲存於本機瀏覽器 (Local Storage)。</p>
+             <div className="mt-6 text-center lg:text-left text-xs text-gray-400 px-2 space-y-1">
+                <p>⚠️ 匯率僅供參考，實際金額請以購買當下為準。</p>
+                <p>
+                   {isSyncConnected 
+                     ? '☁️ 資料已透過 Firebase 雲端同步。' 
+                     : '💾 資料目前僅儲存於本機瀏覽器。'}
+                </p>
              </div>
           </div>
 
         </div>
       </main>
+
+      {/* Sync Modal */}
+      <SyncConfigModal 
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        config={firebaseConfig}
+        onSave={handleSaveSyncConfig}
+        onDisconnect={handleDisconnectSync}
+        isConnected={isSyncConnected}
+        connectionError={syncError}
+      />
     </div>
   );
 };
