@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { WishlistItem } from '../types';
-import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2 } from 'lucide-react';
+import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2, Pencil } from 'lucide-react';
 
 interface ItemCardProps {
   item: WishlistItem;
@@ -286,7 +286,16 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-right shadow-sm">
+                <div 
+                  onClick={startBuying}
+                  className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-right shadow-sm cursor-pointer hover:bg-white hover:border-indigo-300 hover:shadow-md transition-all relative group/price"
+                  title="點擊修改價格"
+                >
+                   {/* Edit Icon Overlay */}
+                   <div className="absolute top-1.5 left-2 opacity-0 group-hover/price:opacity-100 text-indigo-400 transition-opacity">
+                      <Pencil size={14} />
+                   </div>
+
                    <div className="flex flex-col items-end">
                       <div className="flex items-baseline gap-1.5">
                         <span className={`text-2xl font-bold font-mono tracking-tight leading-none ${item.isBought ? 'text-green-600' : 'text-rose-500'}`}>
