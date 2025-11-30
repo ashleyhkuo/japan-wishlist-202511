@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, WishlistItem, SummaryStats } from './types';
-import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY, FIREBASE_CONFIG } from './constants';
-import { Plane, RefreshCw, Trash2, Cloud } from 'lucide-react';
+import { User, WishlistItem, SummaryStats, Category } from './types';
+import { DEFAULT_EXCHANGE_RATE, STORAGE_KEY, RATE_STORAGE_KEY, USER_STORAGE_KEY, FIREBASE_CONFIG, CATEGORY_CONFIG } from './constants';
+import { Plane, RefreshCw, Trash2, Cloud, Filter } from 'lucide-react';
 import AddItemForm from './components/AddItemForm';
 import ItemCard from './components/ItemCard';
 import SummaryWidget from './components/SummaryWidget';
@@ -28,6 +28,9 @@ const App: React.FC = () => {
     const saved = localStorage.getItem(USER_STORAGE_KEY);
     return (saved as User) || 'Ash';
   });
+  
+  // Category Filter State
+  const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
 
   // --- Sync State ---
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
@@ -189,6 +192,16 @@ const App: React.FC = () => {
     } as SummaryStats);
   }, [items, exchangeRate]);
 
+  // --- Filtering ---
+  const filteredItems = useMemo(() => {
+    if (activeCategory === 'All') return items;
+    return items.filter(item => {
+      // Backward compatibility: undefined category counts as 'Other'
+      const cat = item.category || 'Other';
+      return cat === activeCategory;
+    });
+  }, [items, activeCategory]);
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       
@@ -275,33 +288,67 @@ const App: React.FC = () => {
             {/* Add Item Form */}
             <AddItemForm currentUser={currentUser} onAddItem={handleAddItem} />
 
-            {/* Items List */}
+            {/* Items List Container */}
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-2 px-1">
-                <h3 className="font-bold text-gray-700 text-lg">
-                  許願清單 ({items.length})
-                </h3>
-                {items.length > 0 && (
-                  <button 
-                    onClick={handleClearAll}
-                    className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 hover:underline"
+              
+              {/* List Header & Filters */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2 px-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-gray-700 text-lg">
+                    許願清單 ({filteredItems.length})
+                  </h3>
+                  {items.length > 0 && (
+                    <button 
+                      onClick={handleClearAll}
+                      className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 hover:underline ml-2"
+                    >
+                      <Trash2 size={12} /> 清空
+                    </button>
+                  )}
+                </div>
+                
+                {/* Category Filter Tabs */}
+                <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-full">
+                  <button
+                    onClick={() => setActiveCategory('All')}
+                    className={`px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-all ${
+                      activeCategory === 'All'
+                        ? 'bg-white text-gray-800 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
                   >
-                    <Trash2 size={12} /> 清空全部
+                    全部
                   </button>
-                )}
+                  {(Object.keys(CATEGORY_CONFIG) as Category[]).map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-all ${
+                        activeCategory === cat
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {CATEGORY_CONFIG[cat].label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {items.length === 0 ? (
+              {/* Items List */}
+              {filteredItems.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
                   <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <RefreshCw className="text-gray-400" />
+                    {activeCategory === 'All' ? <RefreshCw className="text-gray-400" /> : <Filter className="text-gray-400" />}
                   </div>
-                  <p className="text-gray-500 font-medium">目前沒有任何代購項目</p>
-                  <p className="text-gray-400 text-sm mt-1">趕快新增一些想要的東西吧！</p>
+                  <p className="text-gray-500 font-medium">
+                    {activeCategory === 'All' ? '目前沒有任何代購項目' : `此分類 (${CATEGORY_CONFIG[activeCategory].label}) 沒有項目`}
+                  </p>
+                  {activeCategory === 'All' && <p className="text-gray-400 text-sm mt-1">趕快新增一些想要的東西吧！</p>}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {items.map(item => (
+                  {filteredItems.map(item => (
                     <ItemCard
                       key={item.id}
                       item={item}

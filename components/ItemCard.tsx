@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { WishlistItem } from '../types';
+import { WishlistItem, Category } from '../types';
 import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2, Pencil } from 'lucide-react';
+import { CATEGORY_CONFIG } from '../constants';
 
 interface ItemCardProps {
   item: WishlistItem;
@@ -31,12 +32,17 @@ const processUrl = (url: string) => {
 
 const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDelete }) => {
   const [isBuying, setIsBuying] = useState(false);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
   
   // Logic for display:
   // 1. Image Source: Always use imageUrl if available. 
   // 2. Link URL: Use productUrl if available. Fallback to imageUrl (for legacy items).
   const displayImage = item.imageUrl; 
   const displayLink = item.productUrl || item.imageUrl;
+  
+  // Resolve Category (Fallback to Other if undefined)
+  const currentCategory = item.category || 'Other';
+  const categoryConfig = CATEGORY_CONFIG[currentCategory];
 
   // Image State
   const initialUrl = processUrl(displayImage);
@@ -87,7 +93,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
   const creatorLabel = item.createdBy === 'Ash' ? 'Ash' : 'Greg';
 
   // Handlers
-  const startBuying = () => {
+  const startBuying = (e?: React.MouseEvent) => {
+    e?.stopPropagation(); // Prevent propagation if called from parent click
     setBuyPrice(item.priceJpy.toString());
     setBuyTax(item.addTax);
     setIsBuying(true);
@@ -144,13 +151,18 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center flex-wrap gap-2">
-              <h3 className={`text-lg font-bold text-gray-900 leading-tight break-words ${item.isBought ? 'line-through text-gray-400' : ''}`}>
+            <div className="flex items-start flex-wrap gap-2 mb-1">
+              <h3 className={`text-lg font-bold text-gray-900 leading-tight break-words mr-1 ${item.isBought ? 'line-through text-gray-400' : ''}`}>
                 {item.name}
               </h3>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${creatorColor} whitespace-nowrap`}>
-                由 {creatorLabel} 建立
-              </span>
+              
+              <div className="flex flex-wrap gap-1.5 mt-0.5">
+                 {/* Creator Badge */}
+                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${creatorColor} whitespace-nowrap`}>
+                  {creatorLabel}
+                 </span>
+                 {/* Category Badge removed from here, moved to right column */}
+              </div>
             </div>
           </div>
 
@@ -189,7 +201,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                   {imgError && (
                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-2 text-center bg-gray-50">
                         <ImageIcon size={24} className="mb-1 opacity-50" />
-                        <span className="text-[10px]">無預覽</span>
+                        <span className="text-[10px] break-words leading-none">無法載入</span>
                      </div>
                   )}
 
@@ -200,6 +212,19 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
               </div>
             </div>
           )}
+
+           {/* If no image, fallback to a nice Link Card for layout consistency */}
+           {!displayImage && displayLink && (
+              <div className="shrink-0 order-2 sm:order-1 self-start">
+                  <a href={displayLink} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 sm:w-32 sm:h-32 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all flex flex-col items-center justify-center text-center p-2 gap-1 group/linkcard">
+                     <div className="bg-white p-2 rounded-full shadow-sm group-hover/linkcard:scale-110 transition-transform">
+                        <ExternalLink size={16} className="text-blue-500" />
+                     </div>
+                     <span className="text-[10px] font-bold text-slate-500 group-hover/linkcard:text-blue-600">前往購買</span>
+                  </a>
+              </div>
+           )}
+
 
           {/* Center Column: Quantity, Notes, URL */}
           <div className="flex-1 order-3 sm:order-2 flex flex-col gap-3 min-w-0">
@@ -244,9 +269,45 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
             )}
           </div>
 
-          {/* Right Column: Price */}
-          <div className="w-full sm:w-44 shrink-0 order-1 sm:order-3 flex flex-col gap-3">
+          {/* Right Column: Category + Price */}
+          <div className="w-full sm:w-44 shrink-0 order-1 sm:order-3 flex flex-col gap-2">
             
+            {/* NEW: Category Switcher (Moved here) */}
+            <div className="flex justify-end relative">
+               {isEditingCategory ? (
+                 <div className="flex flex-wrap justify-end gap-1.5 p-1.5 bg-gray-50 rounded-xl border border-gray-100 w-full animate-in fade-in zoom-in-95 duration-200 z-10">
+                   {(Object.keys(CATEGORY_CONFIG) as Category[]).map((cat) => (
+                     <button
+                       key={cat}
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         onUpdate(item.id, { category: cat });
+                         setIsEditingCategory(false);
+                       }}
+                       className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${
+                          currentCategory === cat
+                            ? CATEGORY_CONFIG[cat].activeClass + ' shadow-sm border-transparent' 
+                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-700'
+                       }`}
+                     >
+                       {CATEGORY_CONFIG[cat].label}
+                     </button>
+                   ))}
+                 </div>
+               ) : (
+                 <button
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     setIsEditingCategory(true);
+                   }}
+                   className={`text-[10px] font-bold px-2 py-0.5 rounded border ${categoryConfig.color} ${categoryConfig.bg} ${categoryConfig.border} hover:opacity-80 transition-opacity`}
+                   title="點擊修改分類"
+                 >
+                   {categoryConfig.label} ▾
+                 </button>
+               )}
+            </div>
+
             {/* Price / Buying Input Block */}
             <div className="min-h-[60px]">
               {isBuying ? (
@@ -288,11 +349,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
               ) : (
                 <div 
                   onClick={startBuying}
-                  className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-right shadow-sm cursor-pointer hover:bg-white hover:border-indigo-300 hover:shadow-md transition-all relative group/price"
+                  className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-right shadow-sm cursor-pointer hover:bg-white hover:border-indigo-300 hover:shadow-md transition-all relative group/price active:scale-95"
                   title="點擊修改價格"
                 >
-                   {/* Edit Icon Overlay */}
-                   <div className="absolute top-1.5 left-2 opacity-0 group-hover/price:opacity-100 text-indigo-400 transition-opacity">
+                   {/* Edit Icon Overlay - Always visible on mobile if needed, or controlled via group-hover */}
+                   <div className="absolute top-1.5 left-2 text-indigo-300 opacity-60 sm:opacity-0 sm:group-hover/price:opacity-100 transition-opacity">
                       <Pencil size={14} />
                    </div>
 

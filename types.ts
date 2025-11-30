@@ -1,10 +1,13 @@
 
 export type User = 'Ash' | 'Greg';
 
+export type Category = 'Clothes' | 'Cosmetics' | 'Supplements' | 'Other';
+
 export interface WishlistItem {
   id: string;
   createdBy: User;
   name: string;
+  category?: Category; // Optional for backward compatibility
   quantity: number;
   priceJpy: number; // 0 if unknown
   addTax: boolean; // true if 10% tax needs to be added

@@ -17,3 +17,10 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "96960694290",
   appId: "1:96960694290:web:1abf91cf41207bd5ee30cb"
 };
+
+export const CATEGORY_CONFIG = {
+  Clothes: { label: '衣服', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', activeClass: 'bg-blue-600 text-white' },
+  Cosmetics: { label: '藥妝', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200', activeClass: 'bg-rose-500 text-white' },
+  Supplements: { label: '營養補劑', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', activeClass: 'bg-emerald-600 text-white' },
+  Other: { label: '其他', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', activeClass: 'bg-slate-600 text-white' },
+};

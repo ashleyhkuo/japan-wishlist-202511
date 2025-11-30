@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, WishlistItem } from '../types';
-import { Plus, Image as ImageIcon, Wand2, Link as LinkIcon } from 'lucide-react';
+import { User, WishlistItem, Category } from '../types';
+import { Plus, Image as ImageIcon, Wand2, Link as LinkIcon, Tag } from 'lucide-react';
+import { CATEGORY_CONFIG } from '../constants';
 
 interface AddItemFormProps {
   currentUser: User;
@@ -28,6 +29,7 @@ const processUrl = (url: string) => {
 const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => {
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [category, setCategory] = useState<Category>('Other');
   const [priceJpy, setPriceJpy] = useState<string>('');
   const [addTax, setAddTax] = useState(false);
   const [notes, setNotes] = useState('');
@@ -71,6 +73,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
     onAddItem({
       createdBy: currentUser,
       name,
+      category,
       quantity: quantity || 1,
       priceJpy: priceJpy ? parseFloat(priceJpy) : 0,
       addTax,
@@ -81,6 +84,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
 
     // Reset form
     setName('');
+    setCategory('Other');
     setQuantity(1);
     setPriceJpy('');
     setAddTax(false);
@@ -105,9 +109,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Row 1: Name and Quantity */}
+        {/* Row 1: Name and Category */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               代購商品名稱 <span className="text-red-500">*</span>
             </label>
@@ -120,7 +124,38 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               className={inputStyle}
             />
           </div>
-          <div>
+        </div>
+
+        {/* Row 2: Category Selection */}
+        <div>
+           <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
+              <Tag size={16} /> 分類
+           </label>
+           <div className="flex flex-wrap gap-2">
+              {(Object.keys(CATEGORY_CONFIG) as Category[]).map((cat) => {
+                 const config = CATEGORY_CONFIG[cat];
+                 const isActive = category === cat;
+                 return (
+                   <button
+                     key={cat}
+                     type="button"
+                     onClick={() => setCategory(cat)}
+                     className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-all ${
+                       isActive 
+                         ? config.activeClass + ' shadow-sm border-transparent' 
+                         : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                     }`}
+                   >
+                     {config.label}
+                   </button>
+                 );
+              })}
+           </div>
+        </div>
+
+        {/* Row 3: Quantity, Price, Tax */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               數量 <span className="text-red-500">*</span>
             </label>
@@ -133,11 +168,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               className={`${inputStyle} text-center`}
             />
           </div>
-        </div>
-
-        {/* Row 2: Price and Tax */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               單價 JPY (稅前)
             </label>
@@ -153,7 +184,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               />
             </div>
           </div>
-          <div className="pb-2">
+          <div className="flex items-end pb-2 md:col-span-1">
              <label className="flex items-center space-x-2 cursor-pointer select-none">
               <div className="relative">
                 <input 
@@ -164,12 +195,12 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
                 />
                 <div className={`w-10 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 ${ringClass} peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-${themeColor}-500`}></div>
               </div>
-              <span className="text-sm text-gray-600 font-medium">需計算 10% 稅</span>
+              <span className="text-sm text-gray-600 font-medium whitespace-nowrap">需計算 10% 稅</span>
             </label>
           </div>
         </div>
 
-        {/* Row 3: Notes */}
+        {/* Row 4: Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             備註 (規格、顏色、尺寸)
@@ -183,7 +214,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
           />
         </div>
 
-        {/* Row 4: URLs (Split into Product Link and Image Link) */}
+        {/* Row 5: URLs (Split into Product Link and Image Link) */}
         <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
           
           {/* 1. Product URL */}
