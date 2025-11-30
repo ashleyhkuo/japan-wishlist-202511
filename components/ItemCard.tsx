@@ -157,8 +157,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
               </h3>
               
               <div className="flex flex-wrap gap-1.5 mt-0.5">
-                 {/* Creator Badge */}
-                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${creatorColor} whitespace-nowrap`}>
+                 {/* Creator Badge - Updated to text-sm */}
+                 <span className={`text-sm font-bold px-2 py-0.5 rounded border ${creatorColor} whitespace-nowrap`}>
                   {creatorLabel}
                  </span>
                  {/* Category Badge removed from here, moved to right column */}
@@ -272,7 +272,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
           {/* Right Column: Category + Price */}
           <div className="w-full sm:w-44 shrink-0 order-1 sm:order-3 flex flex-col gap-2">
             
-            {/* NEW: Category Switcher (Moved here) */}
+            {/* NEW: Category Switcher (Moved here) - Updated font size */}
             <div className="flex justify-end relative">
                {isEditingCategory ? (
                  <div className="flex flex-wrap justify-end gap-1.5 p-1.5 bg-gray-50 rounded-xl border border-gray-100 w-full animate-in fade-in zoom-in-95 duration-200 z-10">
@@ -284,7 +284,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                          onUpdate(item.id, { category: cat });
                          setIsEditingCategory(false);
                        }}
-                       className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${
+                       className={`text-sm font-bold px-2 py-1.5 rounded-md border transition-all ${
                           currentCategory === cat
                             ? CATEGORY_CONFIG[cat].activeClass + ' shadow-sm border-transparent' 
                             : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-700'
@@ -300,7 +300,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                      e.stopPropagation();
                      setIsEditingCategory(true);
                    }}
-                   className={`text-[10px] font-bold px-2 py-0.5 rounded border ${categoryConfig.color} ${categoryConfig.bg} ${categoryConfig.border} hover:opacity-80 transition-opacity`}
+                   className={`text-sm font-bold px-3 py-1 rounded border ${categoryConfig.color} ${categoryConfig.bg} ${categoryConfig.border} hover:opacity-80 transition-opacity`}
                    title="點擊修改分類"
                  >
                    {categoryConfig.label} ▾
@@ -312,8 +312,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
             <div className="min-h-[60px]">
               {isBuying ? (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 animate-in fade-in zoom-in-95 duration-200 shadow-sm">
-                  <div className="text-xs font-bold text-indigo-800 mb-1.5 flex items-center gap-1">
-                    <Calculator size={12} />
+                  <div className="text-sm font-bold text-indigo-800 mb-1.5 flex items-center gap-1">
+                    <Calculator size={14} />
                     確認金額 (JPY)
                   </div>
                   <input
@@ -322,7 +322,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                     min="0"
                     value={buyPrice}
                     onChange={(e) => setBuyPrice(e.target.value)}
-                    className="w-full px-2 py-1 mb-2 text-base font-mono font-bold border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-2 py-1 mb-2 text-lg font-mono font-bold border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
                     placeholder="實際金額"
                   />
                   <div className="flex flex-col gap-2">
@@ -331,17 +331,17 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                         type="checkbox" 
                         checked={buyTax} 
                         onChange={(e) => setBuyTax(e.target.checked)}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                        className="rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 w-4 h-4"
                       />
-                      <span className="text-xs text-indigo-700">含 10% 稅</span>
+                      <span className="text-sm text-indigo-700">含 10% 稅</span>
                     </label>
                     
-                    <div className="flex gap-1.5 justify-end mt-1">
-                       <button onClick={cancelBuying} className="p-1 text-gray-400 hover:bg-white rounded hover:text-gray-600 transition-colors">
-                         <X size={16} />
+                    <div className="flex gap-2 justify-end mt-1">
+                       <button onClick={cancelBuying} className="p-1.5 text-gray-400 hover:bg-white rounded hover:text-gray-600 transition-colors">
+                         <X size={18} />
                        </button>
-                       <button onClick={confirmBuying} className="px-2 py-1 bg-indigo-600 text-white rounded text-xs font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1 transition-colors">
-                         <Check size={12} /> 確定
+                       <button onClick={confirmBuying} className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-700 shadow-sm flex items-center gap-1 transition-colors">
+                         <Check size={14} /> 確定
                        </button>
                     </div>
                   </div>

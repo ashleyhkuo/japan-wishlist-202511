@@ -307,11 +307,11 @@ const App: React.FC = () => {
                   )}
                 </div>
                 
-                {/* Category Filter Tabs */}
+                {/* Category Filter Tabs - Updated text-sm */}
                 <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-full">
                   <button
                     onClick={() => setActiveCategory('All')}
-                    className={`px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-all ${
+                    className={`px-3 py-1 rounded-md text-sm font-bold whitespace-nowrap transition-all ${
                       activeCategory === 'All'
                         ? 'bg-white text-gray-800 shadow-sm'
                         : 'text-gray-500 hover:text-gray-700'
@@ -323,7 +323,7 @@ const App: React.FC = () => {
                     <button
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
-                      className={`px-3 py-1 rounded-md text-xs font-bold whitespace-nowrap transition-all ${
+                      className={`px-3 py-1 rounded-md text-sm font-bold whitespace-nowrap transition-all ${
                         activeCategory === cat
                           ? 'bg-white text-indigo-600 shadow-sm'
                           : 'text-gray-500 hover:text-gray-700'
