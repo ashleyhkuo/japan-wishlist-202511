@@ -9,11 +9,11 @@ export const USER_STORAGE_KEY = 'japan_shopping_user_v1';
 // 填入後，所有裝置打開網頁都會自動連線，無需手動設定。
 // ---------------------------------------------------------
 export const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY_HERE",           // 範例: "AIzaSyD..."
-  authDomain: "YOUR_AUTH_DOMAIN",        // 範例: "japan-wishlist.firebaseapp.com"
-  databaseURL: "YOUR_DATABASE_URL",      // 範例: "https://japan-wishlist-default-rtdb.firebaseio.com"
-  projectId: "YOUR_PROJECT_ID",          // 範例: "japan-wishlist"
-  storageBucket: "YOUR_STORAGE_BUCKET",  // 範例: "japan-wishlist.appspot.com"
-  messagingSenderId: "YOUR_SENDER_ID",   // 範例: "123456789"
-  appId: "YOUR_APP_ID"                   // 範例: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyC1j5ESsNKJd8-qlZg0JBI-ocGzgGOwwJY",
+  authDomain: "japan-wishlist-202511.firebaseapp.com",
+  databaseURL: "https://japan-wishlist-202511-default-rtdb.firebaseio.com",
+  projectId: "japan-wishlist-202511",
+  storageBucket: "japan-wishlist-202511.firebasestorage.app",
+  messagingSenderId: "96960694290",
+  appId: "1:96960694290:web:1abf91cf41207bd5ee30cb"
 };
