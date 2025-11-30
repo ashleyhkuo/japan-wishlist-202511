@@ -1,11 +1,29 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { User, WishlistItem } from '../types';
-import { Plus, Image as ImageIcon } from 'lucide-react';
+import { Plus, Image as ImageIcon, Wand2, Link as LinkIcon } from 'lucide-react';
 
 interface AddItemFormProps {
   currentUser: User;
   onAddItem: (item: Omit<WishlistItem, 'id' | 'createdAt' | 'isBought'>) => void;
 }
+
+// Helper: Convert Google Drive or other share links to direct view links
+const processUrl = (url: string) => {
+  if (!url) return '';
+  try {
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+    }
+    if (url.includes('dropbox.com') && url.includes('dl=0')) {
+      return url.replace('dl=0', 'raw=1');
+    }
+  } catch (e) {
+    return url;
+  }
+  return url;
+};
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => {
   const [name, setName] = useState('');
@@ -13,7 +31,38 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
   const [priceJpy, setPriceJpy] = useState<string>('');
   const [addTax, setAddTax] = useState(false);
   const [notes, setNotes] = useState('');
+  
+  // URL States
+  const [productUrl, setProductUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  
+  // Preview Logic
+  const [previewSrc, setPreviewSrc] = useState('');
+  const [isMagicLink, setIsMagicLink] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    if (!imageUrl) {
+        setPreviewSrc('');
+        setIsMagicLink(false);
+        setImgError(false);
+        return;
+    }
+    setPreviewSrc(processUrl(imageUrl));
+    setIsMagicLink(false);
+    setImgError(false);
+  }, [imageUrl]);
+
+  const handlePreviewError = () => {
+    if (!previewSrc) return;
+    if (!isMagicLink) {
+        // Try Microlink fallback
+        setPreviewSrc(`https://api.microlink.io/?url=${encodeURIComponent(imageUrl)}&embed=image.url`);
+        setIsMagicLink(true);
+    } else {
+        setImgError(true);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +76,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
       addTax,
       notes,
       imageUrl,
+      productUrl,
     });
 
     // Reset form
@@ -36,13 +86,15 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
     setAddTax(false);
     setNotes('');
     setImageUrl('');
+    setProductUrl('');
+    setPreviewSrc('');
   };
 
   const themeColor = currentUser === 'Ash' ? 'rose' : 'blue';
   const buttonClass = currentUser === 'Ash' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-blue-500 hover:bg-blue-600';
   const ringClass = currentUser === 'Ash' ? 'focus:ring-rose-500' : 'focus:ring-blue-500';
 
-  // Shared input style: Light gray background, dark text, white on focus
+  // Shared input style
   const inputStyle = `w-full px-4 py-2 bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:bg-white focus:ring-2 ${ringClass} focus:border-transparent outline-none transition-all placeholder-gray-400`;
 
   return (
@@ -117,7 +169,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
           </div>
         </div>
 
-        {/* Row 3: Notes (Expanded Height) */}
+        {/* Row 3: Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             備註 (規格、顏色、尺寸)
@@ -131,18 +183,62 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
           />
         </div>
 
-        {/* Row 4: Image URL (Small) */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
-            <ImageIcon size={12} /> 參考圖片 URL (選填)
-          </label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://..."
-            className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 text-gray-700 focus:bg-white focus:border-gray-300 outline-none transition-colors"
-          />
+        {/* Row 4: URLs (Split into Product Link and Image Link) */}
+        <div className="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+          
+          {/* 1. Product URL */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+              <LinkIcon size={12} /> 商品連結 (購買網址)
+            </label>
+            <input
+              type="url"
+              value={productUrl}
+              onChange={(e) => setProductUrl(e.target.value)}
+              placeholder="https://www.uniqlo.com/..."
+              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-white text-gray-700 focus:border-indigo-300 outline-none transition-colors"
+            />
+            <p className="text-[10px] text-gray-400 mt-1 pl-1">
+               此連結會顯示在清單卡片下方，方便點擊購買。
+            </p>
+          </div>
+
+          {/* 2. Image URL + Preview */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+              <ImageIcon size={12} /> 參考圖片 URL (僅顯示圖片)
+            </label>
+            <div className="flex gap-4 items-start">
+               <div className="flex-grow">
+                 <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="貼上圖片網址 或 Google Drive 連結"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-white text-gray-700 focus:border-indigo-300 outline-none transition-colors"
+                />
+               </div>
+               {/* Preview Thumbnail */}
+               {imageUrl && (
+                 <div className="shrink-0 w-16 h-16 bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm relative">
+                   <img 
+                     src={previewSrc} 
+                     alt="Preview" 
+                     className={`w-full h-full object-cover transition-opacity duration-300 ${imgError ? 'opacity-30' : 'opacity-100'}`}
+                     onError={handlePreviewError}
+                   />
+                   {isMagicLink && !imgError && (
+                      <div className="absolute bottom-0 right-0 bg-indigo-500 text-white p-0.5 rounded-tl-md">
+                          <Wand2 size={8} />
+                      </div>
+                   )}
+                 </div>
+               )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1 pl-1">
+               此網址不會顯示文字，只會用來呈現縮圖。
+            </p>
+          </div>
         </div>
 
         {/* Submit Button */}

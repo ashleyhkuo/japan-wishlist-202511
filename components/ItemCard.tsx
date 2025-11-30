@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { WishlistItem } from '../types';
-import { Trash2, Check, ExternalLink, Calculator, X } from 'lucide-react';
+import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2 } from 'lucide-react';
 
 interface ItemCardProps {
   item: WishlistItem;
@@ -9,8 +10,61 @@ interface ItemCardProps {
   onDelete: (id: string) => void;
 }
 
+// Helper: Convert Google Drive or other share links to direct view links
+const processUrl = (url: string) => {
+  if (!url) return '';
+  try {
+    // Handle Google Drive Links
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+    if (driveMatch && driveMatch[1]) {
+      return `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+    }
+    // Handle Dropbox (dl=0 -> raw=1)
+    if (url.includes('dropbox.com') && url.includes('dl=0')) {
+      return url.replace('dl=0', 'raw=1');
+    }
+  } catch (e) {
+    return url;
+  }
+  return url;
+};
+
 const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDelete }) => {
   const [isBuying, setIsBuying] = useState(false);
+  
+  // Logic for display:
+  // 1. Image Source: Always use imageUrl if available. 
+  // 2. Link URL: Use productUrl if available. Fallback to imageUrl (for legacy items).
+  const displayImage = item.imageUrl; 
+  const displayLink = item.productUrl || item.imageUrl;
+
+  // Image State
+  const initialUrl = processUrl(displayImage);
+  const [imgSrc, setImgSrc] = useState(initialUrl);
+  const [imgError, setImgError] = useState(false);
+  const [isMagicLink, setIsMagicLink] = useState(false);
+
+  // Update image source if item prop changes
+  useEffect(() => {
+    setImgSrc(processUrl(displayImage));
+    setImgError(false);
+    setIsMagicLink(false);
+  }, [displayImage]);
+
+  const handleImageError = () => {
+    if (!imgSrc) return;
+    
+    // If we haven't tried Microlink yet, try it now
+    if (!isMagicLink) {
+      // Use Microlink API to extract the OG:Image from the website URL
+      const magicUrl = `https://api.microlink.io/?url=${encodeURIComponent(displayImage)}&embed=image.url`;
+      setImgSrc(magicUrl);
+      setIsMagicLink(true);
+    } else {
+      // If Microlink also fails, show placeholder
+      setImgError(true);
+    }
+  };
   
   // Local state for the buying process
   const [buyPrice, setBuyPrice] = useState<string>('');
@@ -91,7 +145,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center flex-wrap gap-2">
-              <h3 className={`text-lg font-bold text-gray-900 leading-tight ${item.isBought ? 'line-through text-gray-400' : ''}`}>
+              <h3 className={`text-lg font-bold text-gray-900 leading-tight break-words ${item.isBought ? 'line-through text-gray-400' : ''}`}>
                 {item.name}
               </h3>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${creatorColor} whitespace-nowrap`}>
@@ -110,10 +164,45 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           
-          {/* Left Column: Quantity, Notes, URL */}
-          <div className="flex-1 order-2 sm:order-1 flex flex-col gap-3">
+          {/* Image Block (If image URL exists) */}
+          {displayImage && (
+            <div className="shrink-0 order-2 sm:order-1 self-start">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden shadow-sm relative group/img">
+                <a href={displayLink} target="_blank" rel="noopener noreferrer" className="block w-full h-full cursor-zoom-in">
+                  <img 
+                    src={imgSrc} 
+                    alt={item.name} 
+                    className={`w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110 ${imgError ? 'opacity-50' : ''}`}
+                    onError={handleImageError}
+                  />
+                  
+                  {/* Magic Link Indicator */}
+                  {isMagicLink && !imgError && (
+                    <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                      <Wand2 size={10} /> 預覽
+                    </div>
+                  )}
+
+                  {/* Fallback (Load Failed) */}
+                  {imgError && (
+                     <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-2 text-center bg-gray-50">
+                        <ImageIcon size={24} className="mb-1 opacity-50" />
+                        <span className="text-[10px]">無預覽</span>
+                     </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100">
+                    <ExternalLink className="text-white drop-shadow-md" size={20} />
+                  </div>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Center Column: Quantity, Notes, URL */}
+          <div className="flex-1 order-3 sm:order-2 flex flex-col gap-3 min-w-0">
             
             {/* EDITABLE Quantity Display */}
             <div className="flex items-center self-start bg-gray-100 rounded px-3 py-1.5 border border-transparent hover:border-gray-300 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
@@ -139,24 +228,24 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                 <span className="absolute top-2 right-2 text-[10px] font-bold text-yellow-600/50 uppercase pointer-events-none select-none">詳細備註</span>
             </div>
 
-            {/* URL Link (Enlarged) */}
-            {item.imageUrl && (
+            {/* Product Link (Text version) */}
+            {displayLink && (
               <div className="mt-1">
                 <a 
-                  href={item.imageUrl} 
+                  href={displayLink} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-base text-blue-600 hover:text-blue-800 truncate block hover:underline flex items-center gap-1.5 max-w-full break-all"
+                  className="text-sm text-blue-500 hover:text-blue-700 truncate block hover:underline flex items-center gap-1.5 max-w-full"
                 >
-                   <ExternalLink size={16} className="shrink-0" /> 
-                   <span className="truncate">{item.imageUrl}</span>
+                   <ExternalLink size={14} className="shrink-0" /> 
+                   <span className="truncate">{displayLink}</span>
                 </a>
               </div>
             )}
           </div>
 
-          {/* Right Column: Price Only (Image Removed) */}
-          <div className="w-full sm:w-44 shrink-0 order-1 sm:order-2 flex flex-col gap-3">
+          {/* Right Column: Price */}
+          <div className="w-full sm:w-44 shrink-0 order-1 sm:order-3 flex flex-col gap-3">
             
             {/* Price / Buying Input Block */}
             <div className="min-h-[60px]">

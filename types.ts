@@ -1,3 +1,4 @@
+
 export type User = 'Ash' | 'Greg';
 
 export interface WishlistItem {
@@ -8,7 +9,8 @@ export interface WishlistItem {
   priceJpy: number; // 0 if unknown
   addTax: boolean; // true if 10% tax needs to be added
   notes: string;
-  imageUrl: string;
+  imageUrl: string; // Used for the thumbnail image
+  productUrl?: string; // Used for the clickable link at the bottom
   isBought: boolean;
   createdAt: number;
 }
