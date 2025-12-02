@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { WishlistItem, Category } from '../types';
-import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2, Pencil } from 'lucide-react';
+import { Trash2, Check, ExternalLink, Calculator, X, Image as ImageIcon, Wand2, Pencil, RefreshCw } from 'lucide-react';
 import { CATEGORY_CONFIG } from '../constants';
 
 interface ItemCardProps {
@@ -84,8 +84,14 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
   }, [isBuying]);
 
   // Calculations
-  const taxMultiplier = item.addTax ? 1.1 : 1.0;
-  const unitPriceJpy = item.priceJpy * taxMultiplier;
+  // Logic Update: 
+  // item.priceJpy is assumed to be the "Tax Included Tag Price".
+  // item.addTax = true (Orange) -> No Tax Free -> Pay full price (x 1.0).
+  // item.addTax = false (Green) -> Tax Free -> Pay price / 1.1.
+  const unitPriceJpy = item.addTax 
+    ? item.priceJpy // Pay full price
+    : item.priceJpy / 1.1; // Tax Free (Remove 10% tax)
+
   const totalJpy = Math.round(unitPriceJpy * item.quantity);
   const totalTwd = Math.round(totalJpy * exchangeRate);
 
@@ -116,6 +122,12 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
 
   const handleUnbuy = () => {
     onUpdate(item.id, { isBought: false });
+  };
+  
+  // New Handler: Quick toggle tax status
+  const toggleTax = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onUpdate(item.id, { addTax: !item.addTax });
   };
 
   return (
@@ -322,7 +334,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                     value={buyPrice}
                     onChange={(e) => setBuyPrice(e.target.value)}
                     className="w-full px-2 py-1 mb-2 text-lg font-mono font-bold border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="實際金額"
+                    placeholder="含稅標價"
                   />
                   
                   {/* Tax Toggle */}
@@ -335,8 +347,9 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                             ? 'bg-white text-orange-600 shadow-sm' 
                             : 'text-indigo-400 hover:text-indigo-600'
                         }`}
+                        title="未湊到免稅額，付含稅原價"
                       >
-                        未免稅 (+10%)
+                        含稅原價
                       </button>
                       <button
                         onClick={() => setBuyTax(false)}
@@ -345,8 +358,9 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                             ? 'bg-white text-green-600 shadow-sm' 
                             : 'text-indigo-400 hover:text-indigo-600'
                         }`}
+                        title="有湊到免稅，價格 ÷ 1.1"
                       >
-                        免稅 / 含稅價
+                        免稅 (-10%)
                       </button>
                     </div>
                     
@@ -366,7 +380,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                   className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-right shadow-sm cursor-pointer hover:bg-white hover:border-indigo-300 hover:shadow-md transition-all relative group/price active:scale-95"
                   title="點擊修改價格"
                 >
-                   {/* Edit Icon Overlay - Always visible on mobile if needed, or controlled via group-hover */}
+                   {/* Edit Icon Overlay */}
                    <div className="absolute top-1.5 left-2 text-indigo-300 opacity-60 sm:opacity-0 sm:group-hover/price:opacity-100 transition-opacity">
                       <Pencil size={14} />
                    </div>
@@ -378,9 +392,15 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-1 justify-end">
-                        <span className={`text-sm px-1.5 rounded font-bold ${item.addTax ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
-                           {item.addTax ? '未免稅 (+10%)' : '免稅 / 含稅價'}
-                        </span>
+                        {/* Clickable Tax Badge */}
+                        <button
+                          onClick={toggleTax}
+                          className={`text-sm px-1.5 rounded font-bold transition-all hover:brightness-95 flex items-center gap-0.5 ${item.addTax ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
+                          title="點擊切換計稅方式"
+                        >
+                           {item.addTax ? '含稅原價' : '免稅 (-10%)'}
+                           <RefreshCw size={10} className="opacity-50" />
+                        </button>
                         <div className="text-sm font-medium text-gray-500 font-mono ml-1">
                           ≈ ${totalTwd.toLocaleString()}
                         </div>

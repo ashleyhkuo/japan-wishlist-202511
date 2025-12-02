@@ -31,7 +31,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
   const [quantity, setQuantity] = useState<number>(1);
   const [category, setCategory] = useState<Category>('Other');
   const [priceJpy, setPriceJpy] = useState<string>('');
-  const [addTax, setAddTax] = useState(false); // Default to False (Tax Included/Free)
+  const [addTax, setAddTax] = useState(false); // Default to False (Green/Tax Free)
   const [notes, setNotes] = useState('');
   
   // URL States
@@ -171,7 +171,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
           
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              單價 JPY
+              單價 JPY (含稅標價)
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-gray-500">¥</span>
@@ -199,8 +199,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
                       ? 'bg-white text-orange-600 shadow-sm' 
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
+                  title="未湊到免稅額，付含稅原價"
                 >
-                  未免稅 (+10%)
+                  含稅原價
                 </button>
                 <button
                   type="button"
@@ -210,8 +211,9 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
                       ? 'bg-white text-green-600 shadow-sm' 
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
+                  title="有湊到免稅，價格 ÷ 1.1"
                 >
-                  免稅 / 含稅價
+                  免稅 (-10%)
                 </button>
              </div>
           </div>
