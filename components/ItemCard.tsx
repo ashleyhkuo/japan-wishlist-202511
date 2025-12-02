@@ -325,16 +325,31 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                     className="w-full px-2 py-1 mb-2 text-lg font-mono font-bold border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
                     placeholder="實際金額"
                   />
+                  
+                  {/* Tax Toggle */}
                   <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        checked={buyTax} 
-                        onChange={(e) => setBuyTax(e.target.checked)}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 w-4 h-4"
-                      />
-                      <span className="text-sm text-indigo-700">含 10% 稅</span>
-                    </label>
+                    <div className="flex bg-indigo-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setBuyTax(true)}
+                        className={`flex-1 py-1 text-xs font-bold rounded transition-all ${
+                          buyTax 
+                            ? 'bg-white text-indigo-600 shadow-sm' 
+                            : 'text-indigo-400 hover:text-indigo-600'
+                        }`}
+                      >
+                        稅前 +10%
+                      </button>
+                      <button
+                        onClick={() => setBuyTax(false)}
+                        className={`flex-1 py-1 text-xs font-bold rounded transition-all ${
+                          !buyTax 
+                            ? 'bg-white text-green-600 shadow-sm' 
+                            : 'text-indigo-400 hover:text-indigo-600'
+                        }`}
+                      >
+                        稅後 (含)
+                      </button>
+                    </div>
                     
                     <div className="flex gap-2 justify-end mt-1">
                        <button onClick={cancelBuying} className="p-1.5 text-gray-400 hover:bg-white rounded hover:text-gray-600 transition-colors">
@@ -364,8 +379,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-1 justify-end">
-                        {item.addTax && <span className="text-[10px] text-gray-500 bg-gray-200 px-1 rounded">含稅</span>}
-                        <div className="text-sm font-medium text-gray-500 font-mono">
+                        <span className={`text-[10px] px-1.5 rounded font-bold ${item.addTax ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
+                           {item.addTax ? '稅前計價' : '稅後價'}
+                        </span>
+                        <div className="text-sm font-medium text-gray-500 font-mono ml-1">
                           ≈ ${totalTwd.toLocaleString()}
                         </div>
                       </div>

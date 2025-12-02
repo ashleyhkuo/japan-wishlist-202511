@@ -31,7 +31,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
   const [quantity, setQuantity] = useState<number>(1);
   const [category, setCategory] = useState<Category>('Other');
   const [priceJpy, setPriceJpy] = useState<string>('');
-  const [addTax, setAddTax] = useState(false);
+  const [addTax, setAddTax] = useState(false); // Default to Tax Included (False) based on user preference? Let's default to false (Tax Included/Free) or true? Let's stick to previous default, but maybe false is safer. Let's keep false.
   const [notes, setNotes] = useState('');
   
   // URL States
@@ -168,9 +168,10 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               className={`${inputStyle} text-center`}
             />
           </div>
+          
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              單價 JPY (稅前)
+              單價 JPY
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-gray-500">¥</span>
@@ -184,19 +185,35 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
               />
             </div>
           </div>
-          <div className="flex items-end pb-2 md:col-span-1">
-             <label className="flex items-center space-x-2 cursor-pointer select-none">
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  checked={addTax} 
-                  onChange={(e) => setAddTax(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className={`w-10 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 ${ringClass} peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-${themeColor}-500`}></div>
-              </div>
-              <span className="text-sm text-gray-600 font-medium whitespace-nowrap">需計算 10% 稅</span>
-            </label>
+
+          <div className="md:col-span-1 flex flex-col justify-end pb-0.5">
+             <label className="block text-sm font-medium text-gray-700 mb-1">
+               計稅方式
+             </label>
+             <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setAddTax(true)}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    addTax 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  稅前 (+10%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddTax(false)}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    !addTax 
+                      ? 'bg-white text-green-600 shadow-sm' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  稅後 (含/免)
+                </button>
+             </div>
           </div>
         </div>
 

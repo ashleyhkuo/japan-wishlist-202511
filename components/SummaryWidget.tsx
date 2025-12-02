@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SummaryStats } from '../types';
 import { CheckSquare } from 'lucide-react';
@@ -16,20 +17,20 @@ const SummaryWidget: React.FC<SummaryWidgetProps> = ({ stats }) => {
         </h3>
         
         <div className="space-y-3">
-          <div className="flex justify-between items-center text-emerald-900/70 font-medium">
+          <div className="flex justify-between items-center text-emerald-900/70 font-medium text-sm sm:text-base">
             <span>總數量:</span>
             <span className="font-mono text-xl text-emerald-900 font-bold">{stats.totalCount}</span>
           </div>
           
-          <div className="flex justify-between items-center text-emerald-900/70 font-medium border-t border-emerald-100 pt-2">
-            <span>總日幣金額 (JPY 稅後/含稅):</span>
+          <div className="flex justify-between items-center text-emerald-900/70 font-medium border-t border-emerald-100 pt-2 text-sm sm:text-base">
+            <span>預計總日幣 (JPY 最終需付):</span>
             <span className="font-mono text-xl text-emerald-600 font-bold tracking-tight">
               {stats.totalJpy.toLocaleString()}
             </span>
           </div>
           
-          <div className="flex justify-between items-center text-emerald-900/70 font-medium border-t border-emerald-100 pt-2">
-            <span>總台幣金額 (TWD 稅後/含稅):</span>
+          <div className="flex justify-between items-center text-emerald-900/70 font-medium border-t border-emerald-100 pt-2 text-sm sm:text-base">
+            <span>預計總台幣 (TWD 預估):</span>
             <span className="font-mono text-xl text-red-500 font-bold tracking-tight">
               {stats.totalTwd.toLocaleString()}
             </span>
@@ -45,20 +46,20 @@ const SummaryWidget: React.FC<SummaryWidgetProps> = ({ stats }) => {
         </h3>
         
         <div className="space-y-3">
-          <div className="flex justify-between items-center text-yellow-900/70 font-medium">
+          <div className="flex justify-between items-center text-yellow-900/70 font-medium text-sm sm:text-base">
             <span>已購買數量:</span>
             <span className="font-mono text-xl text-yellow-900 font-bold">{stats.boughtCount}</span>
           </div>
           
-          <div className="flex justify-between items-center text-yellow-900/70 font-medium border-t border-yellow-200/50 pt-2">
-            <span>已購買日幣 (JPY 稅後/含稅):</span>
+          <div className="flex justify-between items-center text-yellow-900/70 font-medium border-t border-yellow-200/50 pt-2 text-sm sm:text-base">
+            <span>已付總日幣 (JPY 實付):</span>
             <span className="font-mono text-xl text-yellow-700 font-bold tracking-tight">
               {stats.boughtJpy.toLocaleString()}
             </span>
           </div>
           
-          <div className="flex justify-between items-center text-yellow-900/70 font-medium border-t border-yellow-200/50 pt-2">
-            <span>已購買台幣 (TWD 稅後/含稅):</span>
+          <div className="flex justify-between items-center text-yellow-900/70 font-medium border-t border-yellow-200/50 pt-2 text-sm sm:text-base">
+            <span>已付總台幣 (TWD 實付):</span>
             <span className="font-mono text-xl text-orange-600 font-bold tracking-tight">
               {stats.boughtTwd.toLocaleString()}
             </span>
