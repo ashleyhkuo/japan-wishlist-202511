@@ -157,11 +157,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
               </h3>
               
               <div className="flex flex-wrap gap-1.5 mt-0.5">
-                 {/* Creator Badge - Updated to text-sm */}
+                 {/* Creator Badge */}
                  <span className={`text-sm font-bold px-2 py-0.5 rounded border ${creatorColor} whitespace-nowrap`}>
                   {creatorLabel}
                  </span>
-                 {/* Category Badge removed from here, moved to right column */}
               </div>
             </div>
           </div>
@@ -272,7 +271,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
           {/* Right Column: Category + Price */}
           <div className="w-full sm:w-44 shrink-0 order-1 sm:order-3 flex flex-col gap-2">
             
-            {/* NEW: Category Switcher (Moved here) - Updated font size */}
+            {/* Category Switcher */}
             <div className="flex justify-end relative">
                {isEditingCategory ? (
                  <div className="flex flex-wrap justify-end gap-1.5 p-1.5 bg-gray-50 rounded-xl border border-gray-100 w-full animate-in fade-in zoom-in-95 duration-200 z-10">
@@ -331,23 +330,23 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                     <div className="flex bg-indigo-100 p-1 rounded-lg">
                       <button
                         onClick={() => setBuyTax(true)}
-                        className={`flex-1 py-1 text-xs font-bold rounded transition-all ${
+                        className={`flex-1 py-1 text-sm font-bold rounded transition-all ${
                           buyTax 
-                            ? 'bg-white text-indigo-600 shadow-sm' 
+                            ? 'bg-white text-orange-600 shadow-sm' 
                             : 'text-indigo-400 hover:text-indigo-600'
                         }`}
                       >
-                        稅前 +10%
+                        未免稅 (+10%)
                       </button>
                       <button
                         onClick={() => setBuyTax(false)}
-                        className={`flex-1 py-1 text-xs font-bold rounded transition-all ${
+                        className={`flex-1 py-1 text-sm font-bold rounded transition-all ${
                           !buyTax 
                             ? 'bg-white text-green-600 shadow-sm' 
                             : 'text-indigo-400 hover:text-indigo-600'
                         }`}
                       >
-                        稅後 (含)
+                        免稅 / 含稅價
                       </button>
                     </div>
                     
@@ -379,8 +378,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, exchangeRate, onUpdate, onDel
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-1 justify-end">
-                        <span className={`text-[10px] px-1.5 rounded font-bold ${item.addTax ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'}`}>
-                           {item.addTax ? '稅前計價' : '稅後價'}
+                        <span className={`text-sm px-1.5 rounded font-bold ${item.addTax ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                           {item.addTax ? '未免稅 (+10%)' : '免稅 / 含稅價'}
                         </span>
                         <div className="text-sm font-medium text-gray-500 font-mono ml-1">
                           ≈ ${totalTwd.toLocaleString()}

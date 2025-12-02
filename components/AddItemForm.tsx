@@ -31,7 +31,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
   const [quantity, setQuantity] = useState<number>(1);
   const [category, setCategory] = useState<Category>('Other');
   const [priceJpy, setPriceJpy] = useState<string>('');
-  const [addTax, setAddTax] = useState(false); // Default to Tax Included (False) based on user preference? Let's default to false (Tax Included/Free) or true? Let's stick to previous default, but maybe false is safer. Let's keep false.
+  const [addTax, setAddTax] = useState(false); // Default to False (Tax Included/Free)
   const [notes, setNotes] = useState('');
   
   // URL States
@@ -196,11 +196,11 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
                   onClick={() => setAddTax(true)}
                   className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
                     addTax 
-                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      ? 'bg-white text-orange-600 shadow-sm' 
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  稅前 (+10%)
+                  未免稅 (+10%)
                 </button>
                 <button
                   type="button"
@@ -211,7 +211,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
                       : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  稅後 (含/免)
+                  免稅 / 含稅價
                 </button>
              </div>
           </div>
@@ -292,7 +292,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ currentUser, onAddItem }) => 
         {/* Submit Button */}
         <button
           type="submit"
-          className={`w-full ${buttonClass} text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2`}
+          className={`w-full ${buttonClass} text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transform active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2 text-sm`}
         >
           <Plus size={20} />
           新增清單 ({currentUser} 建立)
